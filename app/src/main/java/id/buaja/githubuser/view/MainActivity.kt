@@ -1,7 +1,8 @@
-package id.buaja.githubuser
+package id.buaja.githubuser.view
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import id.buaja.githubuser.R
 
 class MainActivity : AppCompatActivity() {
 
