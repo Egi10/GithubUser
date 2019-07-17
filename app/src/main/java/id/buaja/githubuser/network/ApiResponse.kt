@@ -4,6 +4,8 @@ import com.google.gson.annotations.SerializedName
 import id.buaja.githubuser.network.model.ItemsItem
 
 class ApiResponse (
+    @field:SerializedName("message")
+    val message: String? = null,
 
     @field:SerializedName("total_count")
     val totalCount: Int? = null,
