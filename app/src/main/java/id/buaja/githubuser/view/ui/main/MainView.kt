@@ -5,7 +5,7 @@ import id.buaja.githubuser.view.base.BaseView
 
 interface MainView : BaseView {
     fun onSuccess(list: List<ItemsItem>?)
-    fun onUnprocessableEntity(message: String?)
-    fun onBadRequest(message: String?)
-    fun onNextPage(link: String?)
+    fun onSuccessNext(list: List<ItemsItem>?)
+    fun onMessage(message: String?)
+    fun onNextPage(q: String?)
 }
