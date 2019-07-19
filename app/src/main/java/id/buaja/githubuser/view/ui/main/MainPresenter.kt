@@ -16,7 +16,12 @@ class MainPresenter(private val view: MainView) : BaseConfig() {
 
                 when(response.code()) {
                     200 -> {
-                        view.onSuccess(response.body()?.items)
+                        val list = response.body()?.items
+                        if (list.isNullOrEmpty()) {
+                            view.onEmpty()
+                        } else {
+                            view.onSuccess(list)
+                        }
 
                         val next = response.headers().get("Link")
                         if (next.isNullOrEmpty()) {
@@ -36,7 +41,10 @@ class MainPresenter(private val view: MainView) : BaseConfig() {
                     }
 
                     422 -> {
-                        view.onUnprocessableEntity()
+                        response.errorBody()?.let {
+                            val jsonObject = JSONObject(it.string())
+                            view.onMessage(jsonObject.getString("message"))
+                        }
                     }
 
                     400 -> {
@@ -92,7 +100,10 @@ class MainPresenter(private val view: MainView) : BaseConfig() {
                     }
 
                     422 -> {
-                        view.onUnprocessableEntity()
+                        response.errorBody()?.let {
+                            val jsonObject = JSONObject(it.string())
+                            view.onMessage(jsonObject.getString("message"))
+                        }
                     }
 
                     400 -> {

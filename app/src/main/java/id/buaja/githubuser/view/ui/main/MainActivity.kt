@@ -52,15 +52,9 @@ class MainActivity : BaseActivity(), MainView {
                     Log.d("Sukses onText", p0.toString())
                     q = p0.toString()
                     loadData(q)
-                }, 1000)
+                }, 2000)
             }
         })
-
-        swipeRefresh.post {
-            if(q.isNotEmpty()) {
-                loadData(q)
-            }
-        }
 
         swipeRefresh.setOnRefreshListener {
             swipeRefresh.isRefreshing = false
@@ -95,8 +89,13 @@ class MainActivity : BaseActivity(), MainView {
         }
     }
 
-    private fun loadData(q: String?) {
-        mainPresenter.getUser(q)
+    private fun loadData(q: String) {
+        if (q.isNotEmpty()) {
+            mainPresenter.getUser(q)
+        } else {
+            listItems.clear()
+            itemsAdapter.notifyDataSetChanged()
+        }
         itemsAdapter = ItemsAdapter(baseContext, listItems) {
 
         }
@@ -137,9 +136,16 @@ class MainActivity : BaseActivity(), MainView {
         }.show()
     }
 
-    override fun onUnprocessableEntity() {
+    override fun onEmpty() {
         listItems.clear()
         itemsAdapter.notifyDataSetChanged()
+        alert("Maaf Data User Yang Anda Cari Tidak Ditemukan") {
+            yesButton {
+                etAutoComplite.setText("")
+                etAutoComplite.clearFocus()
+                it.dismiss()
+            }
+        }.show()
     }
 
     override fun onNextPage(q: String?) {
