@@ -1,8 +1,11 @@
 package id.buaja.githubuser.view.ui.main
 
+import android.content.Intent
+import android.os.Handler
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
+import android.view.KeyEvent
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
@@ -10,13 +13,12 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import id.buaja.githubuser.R
 import id.buaja.githubuser.adapter.ItemsAdapter
 import id.buaja.githubuser.network.model.ItemsItem
-import id.buaja.githubuser.untils.EndlessSrolling
+import id.buaja.githubuser.untils.EndlessRecyclerViewScrollListener
 import id.buaja.githubuser.view.base.BaseActivity
 import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import org.jetbrains.anko.alert
+import org.jetbrains.anko.noButton
+import org.jetbrains.anko.toast
 import org.jetbrains.anko.yesButton
 
 class MainActivity : BaseActivity(), MainView {
@@ -46,16 +48,18 @@ class MainActivity : BaseActivity(), MainView {
             }
 
             override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
-                Log.d("Sukses onText", p0.toString())
-                q = p0.toString()
-                mainPresenter.getUser(p0.toString())
-
-                rvList.addOnScrollListener(scrollData())
+                Handler().postDelayed({
+                    Log.d("Sukses onText", p0.toString())
+                    q = p0.toString()
+                    loadData(q)
+                }, 2000)
             }
         })
 
         swipeRefresh.post {
-            loadData()
+            if(q.isNotEmpty()) {
+                loadData(q)
+            }
         }
 
         swipeRefresh.setOnRefreshListener {
@@ -73,35 +77,40 @@ class MainActivity : BaseActivity(), MainView {
         // Handle item selection
         return when (item.itemId) {
             R.id.info -> {
-
+                alert("GitHub adalah layanan penginangan web bersama untuk proyek " +
+                        "pengembangan perangkat lunak yang menggunakan sistem pengontrol versi " +
+                        "Git dan layanan hosting internet. Hal ini banyak digunakan untuk kode " +
+                        "komputer. Wikipedia") {
+                    yesButton {
+                        it.dismiss()
+                    }
+                }.show()
                 true
             }
             R.id.setting -> {
-
+                toast("Belum Ada Menu")
                 true
             }
             else -> super.onOptionsItemSelected(item)
         }
     }
 
-    private fun loadData() {
+    private fun loadData(q: String?) {
+        mainPresenter.getUser(q)
         itemsAdapter = ItemsAdapter(baseContext, listItems) {
 
         }
-        rvList.layoutManager = LinearLayoutManager(baseContext)
+        val layoutManager = LinearLayoutManager(baseContext)
+        rvList.layoutManager = layoutManager
         rvList.adapter = itemsAdapter
-        GlobalScope.launch {
-            delay(2000)
-            rvList.addOnScrollListener(scrollData())
-        }
-    }
+        Handler().postDelayed({
+            rvList.addOnScrollListener(object : EndlessRecyclerViewScrollListener(layoutManager) {
+                override fun onLoadMore() {
+                    mainPresenter.getUserNext(q, page)
+                }
 
-    private fun scrollData(): EndlessSrolling {
-        return object : EndlessSrolling() {
-            override fun onLoadMore() {
-                mainPresenter.getUserNext(q, page)
-            }
-        }
+            })
+        }, 3000)
     }
 
     override fun onSuccess(list: List<ItemsItem>?) {
@@ -128,11 +137,21 @@ class MainActivity : BaseActivity(), MainView {
         }.show()
     }
 
+    override fun onUnprocessableEntity() {
+        listItems.clear()
+        itemsAdapter.notifyDataSetChanged()
+    }
+
     override fun onNextPage(q: String?) {
         q?.let {
             page = it
             Log.d("Sukses Page", page)
         }
+    }
+
+    override fun onNoPage() {
+        Log.d("Page", "No Page")
+        q = ""
     }
 
     override fun showLoading() {
@@ -145,5 +164,24 @@ class MainActivity : BaseActivity(), MainView {
 
     override fun hideLoading() {
         swipeRefresh.isRefreshing = false
+    }
+
+    // onBack
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            alert("Apakah yain anda akan keluar ?") {
+                yesButton {
+                    val exit = Intent(Intent.ACTION_MAIN)
+                    exit.addCategory(Intent.CATEGORY_HOME)
+                    exit.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    startActivity(exit)
+                }
+
+                noButton {
+                    it.dismiss()
+                }
+            }.show()
+        }
+        return super.onKeyDown(keyCode, event)
     }
 }
