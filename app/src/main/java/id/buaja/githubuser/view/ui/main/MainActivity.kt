@@ -52,7 +52,7 @@ class MainActivity : BaseActivity(), MainView {
                     Log.d("Sukses onText", p0.toString())
                     q = p0.toString()
                     loadData(q)
-                }, 2000)
+                }, 1000)
             }
         })
 
